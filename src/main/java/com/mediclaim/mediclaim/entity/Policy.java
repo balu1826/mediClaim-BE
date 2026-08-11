@@ -8,108 +8,103 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-    name = "policies",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_policy_tenant_code",
-            columnNames = {"tenant_id", "code"}
-        )
-    }
-)
+@Table(name = "policies", uniqueConstraints = {
+		@UniqueConstraint(name = "uk_policy_number", columnNames = "policy_number") })
 public class Policy {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	private UUID id;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+	@Column(name = "tenant_id", nullable = false)
+	private UUID tenantId;
 
-    @Column(nullable = false, length = 50)
-    private String code;
+	@Column(name = "patient_id", nullable = false)
+	private UUID patientId;
 
-    @Column(length = 500)
-    private String description;
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "policy_type_id", nullable = false, foreignKey = @ForeignKey(name = "fk_policy_policy_type"))
+	private PolicyType policyType;
 
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal coverageAmount;
+	@Column(name = "policy_number", nullable = false, unique = true, length = 30)
+	private String policyNumber;
 
-    @Column(nullable = false, precision = 15, scale = 2)
-    private BigDecimal premium;
+	@Column(name = "annual_limit", nullable = false, precision = 18, scale = 2)
+	private BigDecimal annualLimit;
 
-    @Column(nullable = false)
-    private LocalDate startDate;
+	@Column(name = "used_amount", nullable = false, precision = 18, scale = 2)
+	private BigDecimal usedAmount;
 
-    @Column(nullable = false)
-    private LocalDate endDate;
+	@Column(name = "start_date", nullable = false)
+	private LocalDate startDate;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private PolicyStatus status;
+	@Column(name = "end_date", nullable = false)
+	private LocalDate endDate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-        name = "tenant_id",
-        nullable = false,
-        foreignKey = @ForeignKey(name = "fk_policy_tenant")
-    )
-    private Tenant tenant;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private PolicyStatus status;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-    // getters and setters
+	@PrePersist
+	protected void onCreate() {
+		createdAt = LocalDateTime.now();
+	}
+
+	// Getters and Setters
+
 	public UUID getId() {
 		return id;
 	}
 
-	public void setId(UUID id) {
-		this.id = id;
+	public UUID getTenantId() {
+		return tenantId;
 	}
 
-	public String getName() {
-		return name;
+	public void setTenantId(UUID tenantId) {
+		this.tenantId = tenantId;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public UUID getPatientId() {
+		return patientId;
 	}
 
-	public String getCode() {
-		return code;
+	public void setPatientId(UUID patientId) {
+		this.patientId = patientId;
 	}
 
-	public void setCode(String code) {
-		this.code = code;
+	public PolicyType getPolicyType() {
+		return policyType;
 	}
 
-	public String getDescription() {
-		return description;
+	public void setPolicyType(PolicyType policyType) {
+		this.policyType = policyType;
 	}
 
-	public void setDescription(String description) {
-		this.description = description;
+	public String getPolicyNumber() {
+		return policyNumber;
 	}
 
-	public BigDecimal getCoverageAmount() {
-		return coverageAmount;
+	public void setPolicyNumber(String policyNumber) {
+		this.policyNumber = policyNumber;
 	}
 
-	public void setCoverageAmount(BigDecimal coverageAmount) {
-		this.coverageAmount = coverageAmount;
+	public BigDecimal getAnnualLimit() {
+		return annualLimit;
 	}
 
-	public BigDecimal getPremium() {
-		return premium;
+	public void setAnnualLimit(BigDecimal annualLimit) {
+		this.annualLimit = annualLimit;
 	}
 
-	public void setPremium(BigDecimal premium) {
-		this.premium = premium;
+	public BigDecimal getUsedAmount() {
+		return usedAmount;
+	}
+
+	public void setUsedAmount(BigDecimal usedAmount) {
+		this.usedAmount = usedAmount;
 	}
 
 	public LocalDate getStartDate() {
@@ -136,14 +131,6 @@ public class Policy {
 		this.status = status;
 	}
 
-	public Tenant getTenant() {
-		return tenant;
-	}
-
-	public void setTenant(Tenant tenant) {
-		this.tenant = tenant;
-	}
-
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
@@ -152,6 +139,8 @@ public class Policy {
 		this.createdAt = createdAt;
 	}
 
-    
-    
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
 }

@@ -1,107 +1,130 @@
 package com.mediclaim.mediclaim.service;
 
-import com.mediclaim.mediclaim.dto.claim.CreatePolicyRequest;
-import com.mediclaim.mediclaim.dto.claim.PolicyResponse;
-import com.mediclaim.mediclaim.dto.tenant.TenantResponse;
-import com.mediclaim.mediclaim.entity.Policy;
-import com.mediclaim.mediclaim.entity.PolicyStatus;
-import com.mediclaim.mediclaim.entity.Tenant;
-import com.mediclaim.mediclaim.entity.TenantStatus;
-import com.mediclaim.mediclaim.repository.PolicyRepository;
-import com.mediclaim.mediclaim.repository.TenantRepository;
-import com.mediclaim.mediclaim.exception.BusinessException;
-import com.mediclaim.mediclaim.exception.ResourceNotFoundException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.mediclaim.mediclaim.dto.claim.EnrollPolicyRequest;
+import com.mediclaim.mediclaim.dto.claim.PolicyResponse;
+import com.mediclaim.mediclaim.entity.Policy;
+import com.mediclaim.mediclaim.entity.PolicyStatus;
+import com.mediclaim.mediclaim.entity.PolicyType;
+import com.mediclaim.mediclaim.entity.PolicyTypeStatus;
+import com.mediclaim.mediclaim.exception.BusinessException;
+import com.mediclaim.mediclaim.exception.ResourceNotFoundException;
+import com.mediclaim.mediclaim.repository.PolicyRepository;
+import com.mediclaim.mediclaim.repository.PolicyTypeRepository;
 
 @Service
 public class PolicyService {
-
+	private final PolicyTypeRepository policyTypeRepository;
 	private final PolicyRepository policyRepository;
-	private final TenantRepository tenantRepository;
 
-	public PolicyService(PolicyRepository policyRepository, TenantRepository tenantRepository) {
+	public PolicyService(PolicyRepository policyRepository, PolicyTypeRepository policyTypeRepository) {
 
 		this.policyRepository = policyRepository;
-		this.tenantRepository = tenantRepository;
+		this.policyTypeRepository = policyTypeRepository;
 	}
 
 	@Transactional
-	public PolicyResponse createPolicy(CreatePolicyRequest request) {
+	public PolicyResponse enrollPolicy(EnrollPolicyRequest request) {
 
 		JwtAuthenticationToken authentication = (JwtAuthenticationToken) SecurityContextHolder.getContext()
 				.getAuthentication();
-		String tenantIdClaim = authentication.getToken().getClaimAsString("tenantId");
-		UUID tenantId = UUID.fromString(tenantIdClaim);
-		Tenant tenant = tenantRepository.findById(tenantId)
-				.orElseThrow(() -> new BusinessException("Tenant not found"));
-		if (tenant.getStatus() != TenantStatus.ACTIVE) {
-			throw new BusinessException("Tenant is not active");
-		}
-		String code = request.getCode().trim().toUpperCase();
 
-		if (policyRepository.existsByTenantIdAndCode(tenantId, code)) {
-			throw new BusinessException("Policy code already exists in this tenant", HttpStatus.CONFLICT);
+		UUID patientId = UUID.fromString(authentication.getToken().getSubject());
+
+		UUID tenantId = UUID.fromString(authentication.getToken().getClaimAsString("tenantId"));
+
+		PolicyType policyType = policyTypeRepository.findById(request.getPolicyTypeId())
+				.orElseThrow(() -> new ResourceNotFoundException("Policy type not found"));
+
+		/*
+		 * Tenant isolation
+		 */
+		if (!policyType.getTenant().getId().equals(tenantId)) {
+
+			throw new ResourceNotFoundException("Policy type not found");
 		}
 
-		if (!request.getEndDate().isAfter(request.getStartDate())) {
+		if (policyType.getStatus() != PolicyTypeStatus.ACTIVE) {
 
-			throw new BusinessException("Policy end date must be after start date");
+			throw new BusinessException("Policy type is not active");
 		}
+
+		/*
+		 * Prevent duplicate enrollment
+		 */
+		if (policyRepository.existsByTenantIdAndPatientIdAndPolicyTypeId(tenantId, patientId,
+				request.getPolicyTypeId())) {
+
+			throw new BusinessException("You are already enrolled in this policy");
+		}
+
+		LocalDate startDate = LocalDate.now();
+		LocalDate endDate = startDate.plusYears(1);
 
 		Policy policy = new Policy();
 
-		policy.setName(request.getName().trim());
-		policy.setCode(code);
-		policy.setDescription(request.getDescription());
-		policy.setCoverageAmount(request.getCoverageAmount());
-		policy.setPremium(request.getPremium());
-		policy.setStartDate(request.getStartDate());
-		policy.setEndDate(request.getEndDate());
+		policy.setTenantId(tenantId);
+		policy.setPatientId(patientId);
+		policy.setPolicyType(policyType);
 
-		// Server-controlled values
+		policy.setAnnualLimit(policyType.getAnnualLimit());
+
+		policy.setUsedAmount(BigDecimal.ZERO);
+
+		policy.setStartDate(startDate);
+		policy.setEndDate(endDate);
+
 		policy.setStatus(PolicyStatus.ACTIVE);
-		policy.setTenant(tenant);
 
-		Policy savedPolicy= policyRepository.save(policy);
-		return mapToResponse(savedPolicy);
+		policy.setPolicyNumber(generatePolicyNumber(tenantId, policyType.getTenant().getCode()));
+
+		Policy savedPolicy = policyRepository.save(policy);
+
+		return new PolicyResponse(savedPolicy.getId(), savedPolicy.getPolicyNumber(),
+				savedPolicy.getPolicyType().getName(), savedPolicy.getAnnualLimit(), savedPolicy.getUsedAmount(),
+				savedPolicy.getStartDate(), savedPolicy.getEndDate(), savedPolicy.getStatus());
 	}
-	
-	@Transactional(readOnly = true)
-    public List<PolicyResponse> getAllPolicies() {
 
-        return policyRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
 	@Transactional(readOnly = true)
-    public PolicyResponse getPolicy(String code) {
+	public List<PolicyResponse> getAllPolicies() {
+
+		return policyRepository.findAll().stream().map(this::mapToResponse).toList();
+	}
+
+	@Transactional(readOnly = true)
+	public PolicyResponse getPolicyByNumber(String policyNumber) {
+
 		JwtAuthenticationToken authentication = (JwtAuthenticationToken) SecurityContextHolder.getContext()
 				.getAuthentication();
-		String tenantIdClaim = authentication.getToken().getClaimAsString("tenantId");
-		UUID tenantId = UUID.fromString(tenantIdClaim);
-		Policy policy=policyRepository.findByCode(code)
-				.orElseThrow(() ->new ResourceNotFoundException("Policy not found" ,HttpStatus.NOT_FOUND));;
-		if(policyRepository.existsByTenantIdAndCode(tenantId, code)) {
-			throw new ResourceNotFoundException("No Active Tenant Found With This Code!",HttpStatus.NOT_FOUND);
-		}
-				
-        return mapToResponse(policy);
-    }
-	
-	
-	private PolicyResponse mapToResponse(Policy policy) {
-		return new  PolicyResponse(policy.getId(), policy.getName(), policy.getCode(),
-				policy.getDescription(), policy.getCoverageAmount(), policy.getPremium(), policy.getStartDate(),
-				policy.getEndDate(), policy.getStatus(), policy.getCreatedAt());
+
+		UUID tenantId = UUID.fromString(authentication.getToken().getClaimAsString("tenantId"));
+
+		Policy policy = policyRepository.findByTenantIdAndPolicyNumber(tenantId, policyNumber)
+				.orElseThrow(() -> new ResourceNotFoundException("Policy not found"));
+
+		return mapToResponse(policy);
 	}
+
+	private String generatePolicyNumber(UUID tenantId, String tenantCode) {
+
+		long sequence = policyRepository.countByTenantId(tenantId) + 1;
+
+		return String.format("POL-%d-%s-%06d", LocalDate.now().getYear(), tenantCode, sequence);
+	}
+
+	private PolicyResponse mapToResponse(Policy policy) {
+		return new PolicyResponse(policy.getId(), policy.getPolicyNumber(), policy.getPolicyType().getName(),
+				policy.getAnnualLimit(), policy.getUsedAmount(), policy.getStartDate(), policy.getEndDate(),
+				policy.getStatus());
+	}
+
 }

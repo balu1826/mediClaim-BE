@@ -4,68 +4,57 @@ import com.mediclaim.mediclaim.entity.PolicyStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class PolicyResponse {
 
     private UUID id;
-    private String name;
-    private String code;
-    private String description;
-    private BigDecimal coverageAmount;
-    private BigDecimal premium;
+    private String policyNumber;
+    private String policyType;
+    private BigDecimal annualLimit;
+    private BigDecimal usedAmount;
     private LocalDate startDate;
     private LocalDate endDate;
     private PolicyStatus status;
-    private LocalDateTime createdAt;
 
     public PolicyResponse(
             UUID id,
-            String name,
-            String code,
-            String description,
-            BigDecimal coverageAmount,
-            BigDecimal premium,
+            String policyNumber,
+            String policyType,
+            BigDecimal annualLimit,
+            BigDecimal usedAmount,
             LocalDate startDate,
             LocalDate endDate,
-            PolicyStatus status,
-            LocalDateTime createdAt) {
+            PolicyStatus status) {
 
         this.id = id;
-        this.name = name;
-        this.code = code;
-        this.description = description;
-        this.coverageAmount = coverageAmount;
-        this.premium = premium;
+        this.policyNumber = policyNumber;
+        this.policyType = policyType;
+        this.annualLimit = annualLimit;
+        this.usedAmount = usedAmount;
         this.startDate = startDate;
         this.endDate = endDate;
         this.status = status;
-        this.createdAt = createdAt;
     }
 
     public UUID getId() {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getPolicyNumber() {
+        return policyNumber;
     }
 
-    public String getCode() {
-        return code;
+    public String getPolicyType() {
+        return policyType;
     }
 
-    public String getDescription() {
-        return description;
+    public BigDecimal getAnnualLimit() {
+        return annualLimit;
     }
 
-    public BigDecimal getCoverageAmount() {
-        return coverageAmount;
-    }
-
-    public BigDecimal getPremium() {
-        return premium;
+    public BigDecimal getUsedAmount() {
+        return usedAmount;
     }
 
     public LocalDate getStartDate() {
@@ -78,9 +67,5 @@ public class PolicyResponse {
 
     public PolicyStatus getStatus() {
         return status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 }

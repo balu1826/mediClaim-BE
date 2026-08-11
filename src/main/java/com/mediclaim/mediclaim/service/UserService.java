@@ -7,9 +7,12 @@ import com.mediclaim.mediclaim.entity.TenantStatus;
 import com.mediclaim.mediclaim.entity.User;
 import com.mediclaim.mediclaim.entity.UserStatus;
 import com.mediclaim.mediclaim.exception.BusinessException;
+import com.mediclaim.mediclaim.exception.ResourceNotFoundException;
 import com.mediclaim.mediclaim.repository.TenantRepository;
 import com.mediclaim.mediclaim.repository.UserRepository;
 import com.mediclaim.mediclaim.security.SecurityUtils;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,7 @@ public class UserService {
 
         UUID tenantId =SecurityUtils.getCurrentTenantId();
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() ->new BusinessException(   "Tenant not found" ));
+                .orElseThrow(() ->new ResourceNotFoundException("Tenant not found" ,HttpStatus.NOT_FOUND));
         if (tenant.getStatus() !=TenantStatus.ACTIVE) {
             throw new BusinessException("Tenant is not active");
         }

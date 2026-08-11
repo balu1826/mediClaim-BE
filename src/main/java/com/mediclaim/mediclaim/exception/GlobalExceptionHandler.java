@@ -37,6 +37,18 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+    
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleBusinessException(ResourceNotFoundException exception,
+			HttpServletRequest request) {
+
+		log.warn("Business exception: {}", exception.getMessage());
+		HttpStatus status = exception.getStatus();
+		ErrorResponse response = new ErrorResponse(status.value(), status.getReasonPhrase(), exception.getMessage(),
+				request.getRequestURI());
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(

@@ -35,7 +35,6 @@ public class UserService {
     }
 
     @Transactional
-    @PreAuthorize("hasRole('TENANT_ADMIN')")
     public void createPatient(CreatePatientRequest request) {
 
         UUID tenantId =SecurityUtils.getCurrentTenantId();

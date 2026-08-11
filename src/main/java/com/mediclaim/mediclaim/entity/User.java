@@ -1,6 +1,8 @@
 package com.mediclaim.mediclaim.entity;
 
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -46,6 +48,13 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+    private boolean fraudSpecialist;
+	@Column(precision = 18, scale = 2)
+	private BigDecimal approvalLimit;
+
+    private boolean onLeave;
+
+    private LocalDateTime lastAssignedAt;
 
     public User() {
     }
@@ -125,4 +134,50 @@ public class User {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+	public boolean isFraudSpecialist() {
+		return fraudSpecialist;
+	}
+
+	public void setFraudSpecialist(boolean fraudSpecialist) {
+		this.fraudSpecialist = fraudSpecialist;
+	}
+
+	public boolean isOnLeave() {
+		return onLeave;
+	}
+
+	public void setOnLeave(boolean onLeave) {
+		this.onLeave = onLeave;
+	}
+
+	public LocalDateTime getLastAssignedAt() {
+		return lastAssignedAt;
+	}
+
+	public void setLastAssignedAt(LocalDateTime lastAssignedAt) {
+		this.lastAssignedAt = lastAssignedAt;
+	}
+
+	public void setId(UUID id) {
+		this.id = id;
+	}
+
+	public void setCreatedAt(LocalDateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public void setUpdatedAt(LocalDateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+	public BigDecimal getApprovalLimit() {
+		return approvalLimit;
+	}
+
+	public void setApprovalLimit(BigDecimal approvalLimit) {
+		this.approvalLimit = approvalLimit;
+	}
+	
+    
 }

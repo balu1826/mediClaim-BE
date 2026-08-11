@@ -44,6 +44,9 @@ public class Policy {
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private PolicyStatus status;
+	@Version
+	@Column(nullable = false)
+	private Long version;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;

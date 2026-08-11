@@ -2,21 +2,21 @@ package com.mediclaim.mediclaim.entity;
 
 public enum ClaimStatus {
 
-    DRAFT,
+	DRAFT,
 
-    SUBMITTED,
+	SUBMITTED,
 
-    UNDER_REVIEW,
+	UNDER_REVIEW,
 
-    PENDING_DOCUMENTS,
+	PENDING_DOCUMENTS,
 
-    ESCALATED,
+	ESCALATED,
 
-    APPROVED,
+	APPROVED,
 
-    SETTLED,
+	SETTLED,
 
-    REJECTED,
+	REJECTED,
 
-    WITHDRAWN
+	WITHDRAWN, PENDING_ASSIGNMENT
 }

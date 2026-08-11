@@ -7,6 +7,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.mediclaim.mediclaim.exception.InvalidClaimTransitionException;
+
 @Entity
 @Table(name = "claims", indexes = { @Index(name = "idx_claim_tenant", columnList = "tenant_id"),
 		@Index(name = "idx_claim_patient", columnList = "patient_id"),
@@ -58,6 +60,11 @@ public class Claim {
 
 	@Column(name = "rejection_reason", length = 500)
 	private String rejectionReason;
+	@Column(length = 1000)
+	private String documentRequestReason;
+	@Version
+	@Column(nullable = false)
+	private Long version;
 
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
@@ -193,6 +200,15 @@ public class Claim {
 	public void setRejectionReason(String rejectionReason) {
 		this.rejectionReason = rejectionReason;
 	}
+	
+
+	public String getDocumentRequestReason() {
+		return documentRequestReason;
+	}
+
+	public void setDocumentRequestReason(String documentRequestReason) {
+		this.documentRequestReason = documentRequestReason;
+	}
 
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
@@ -210,5 +226,55 @@ public class Claim {
 		this.updatedAt = updatedAt;
 	}
 
-	// Getters and setters
+	public void transitionTo(ClaimStatus newStatus) {
+
+	    if (!isValidTransition(newStatus)) {
+	        throw new InvalidClaimTransitionException(
+	                "Cannot move claim from "
+	                        + status
+	                        + " to "
+	                        + newStatus
+	        );
+	    }
+
+	    this.status = newStatus;
+	}
+	private boolean isValidTransition(
+	        ClaimStatus newStatus) {
+
+	    return switch (status) {
+
+	        case DRAFT ->
+	                newStatus == ClaimStatus.SUBMITTED
+	                || newStatus == ClaimStatus.WITHDRAWN;
+
+	        case SUBMITTED ->
+	                newStatus == ClaimStatus.UNDER_REVIEW
+	                || newStatus == ClaimStatus.PENDING_ASSIGNMENT;
+
+	        case PENDING_ASSIGNMENT ->
+	                newStatus == ClaimStatus.UNDER_REVIEW;
+
+	        case UNDER_REVIEW ->
+	                newStatus == ClaimStatus.PENDING_DOCUMENTS
+	                || newStatus == ClaimStatus.APPROVED
+	                || newStatus == ClaimStatus.REJECTED
+	                || newStatus == ClaimStatus.ESCALATED;
+
+	        case PENDING_DOCUMENTS ->
+	                newStatus == ClaimStatus.UNDER_REVIEW
+	                || newStatus == ClaimStatus.REJECTED;
+
+	        case ESCALATED ->
+	                newStatus == ClaimStatus.APPROVED
+	                || newStatus == ClaimStatus.REJECTED;
+
+	        case APPROVED ->
+	                newStatus == ClaimStatus.SETTLED;
+
+	        case SETTLED, REJECTED, WITHDRAWN ->
+	                false;
+	    };
+	}
+	
 }

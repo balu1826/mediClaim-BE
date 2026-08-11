@@ -13,33 +13,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(GlobalExceptionHandler.class);
+	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponse> handleBusinessException(
-            BusinessException exception,
-            HttpServletRequest request) {
-
-        log.warn(
-                "Business exception: {}",
-                exception.getMessage()
-        );
-        HttpStatus status = exception.getStatus();
-        ErrorResponse response = new ErrorResponse(
-        		 status.value(),
-                 status.getReasonPhrase(),
-                 exception.getMessage(),
-                 request.getRequestURI()
-        );
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(response);
-    }
-    
-	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleBusinessException(ResourceNotFoundException exception,
+	@ExceptionHandler(BusinessException.class)
+	public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException exception,
 			HttpServletRequest request) {
 
 		log.warn("Business exception: {}", exception.getMessage());
@@ -50,53 +27,54 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
 	}
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(
-            MethodArgumentNotValidException exception,
-            HttpServletRequest request) {
+	@ExceptionHandler(InvalidClaimTransitionException.class)
+	public ResponseEntity<ErrorResponse> handleInvalidClaimTransitionException(
+			InvalidClaimTransitionException exception, HttpServletRequest request) {
 
-        String message = exception.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .findFirst()
-                .map(error ->
-                        error.getField() + ": " +
-                        error.getDefaultMessage())
-                .orElse("Invalid request");
+		log.warn("InvalidClaimTransition exception: {}", exception.getMessage());
+		HttpStatus status = exception.getStatus();
+		ErrorResponse response = new ErrorResponse(status.value(), status.getReasonPhrase(), exception.getMessage(),
+				request.getRequestURI());
 
-        log.warn("Validation failed: {}", message);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                message,
-                request.getRequestURI()
-        );
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException exception,
+			HttpServletRequest request) {
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(response);
-    }
+		log.warn("Business exception: {}", exception.getMessage());
+		HttpStatus status = exception.getStatus();
+		ErrorResponse response = new ErrorResponse(status.value(), status.getReasonPhrase(), exception.getMessage(),
+				request.getRequestURI());
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneralException(
-            Exception exception,
-            HttpServletRequest request) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
 
-        log.error(
-                "Unexpected error occurred",
-                exception
-        );
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception,
+			HttpServletRequest request) {
 
-        ErrorResponse response = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                "An unexpected error occurred",
-                request.getRequestURI()
-        );
+		String message = exception.getBindingResult().getFieldErrors().stream().findFirst()
+				.map(error -> error.getField() + ": " + error.getDefaultMessage()).orElse("Invalid request");
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(response);
-    }
+		log.warn("Validation failed: {}", message);
+
+		ErrorResponse response = new ErrorResponse(HttpStatus.BAD_REQUEST.value(),
+				HttpStatus.BAD_REQUEST.getReasonPhrase(), message, request.getRequestURI());
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ErrorResponse> handleGeneralException(Exception exception, HttpServletRequest request) {
+
+		log.error("Unexpected error occurred", exception);
+
+		ErrorResponse response = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), "An unexpected error occurred",
+				request.getRequestURI());
+
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+	}
 }

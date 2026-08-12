@@ -36,7 +36,7 @@ public interface ClaimRepository extends JpaRepository<Claim, UUID> {
 			      AND c.status <> :draftStatus
 			""")
 	long countClaimsByPatientAndIcd10(@Param("patientId") UUID patientId, @Param("icd10Code") String icd10Code,
-			@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate);
+			@Param("fromDate") LocalDate fromDate, @Param("toDate") LocalDate toDate,@Param("draftStatus") ClaimStatus status);
 
 	@Query(value = """
 			SELECT PERCENTILE_CONT(0.5)

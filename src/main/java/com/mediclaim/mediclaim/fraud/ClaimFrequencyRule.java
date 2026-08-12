@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 
 import com.mediclaim.mediclaim.entity.Claim;
+import com.mediclaim.mediclaim.entity.ClaimStatus;
 import com.mediclaim.mediclaim.repository.ClaimRepository;
 
 @Component
@@ -27,7 +28,7 @@ public class ClaimFrequencyRule implements FraudRule {
 		LocalDate toDate = claim.getTreatmentDate();
 
 		long claimCount = claimRepository.countClaimsByPatientAndIcd10(claim.getPatientId(), claim.getIcd10Code(),
-				fromDate, toDate);
+				fromDate, toDate, ClaimStatus.DRAFT);
 
 		return claimCount > 3 ? SCORE : 0;
 	}

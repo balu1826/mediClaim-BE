@@ -49,7 +49,7 @@ public class ClaimController {
 	}
 
 	@PostMapping("/{claimId}/submit")
-	@PreAuthorize("hasRole('CLIENT')")
+	@PreAuthorize("hasRole('PATIENT')")
 	public ResponseEntity<ClaimResponse> submitClaim(@PathVariable UUID claimId) {
 
 		ClaimResponse response = claimService.submitClaim(claimId);

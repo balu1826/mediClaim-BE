@@ -11,6 +11,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.mediclaim.mediclaim.annotaion.AuditAction;
+import com.mediclaim.mediclaim.annotaion.Auditable;
+import com.mediclaim.mediclaim.annotaion.ResourceType;
 import com.mediclaim.mediclaim.dto.claim.ClaimResponse;
 import com.mediclaim.mediclaim.dto.claim.CreateClaimDraftRequest;
 import com.mediclaim.mediclaim.entity.Claim;
@@ -50,7 +53,10 @@ public class ClaimService {
 		this.fraudScoringService = fraudScoreService;
 		this.userRepository = userRepository;
 	}
-
+	@Auditable(
+	        action = AuditAction.CLAIM_DRAFTED,
+	        entity = ResourceType.Claim
+	)
 	@Transactional
 	public ClaimResponse createDraft(CreateClaimDraftRequest request) {
 
